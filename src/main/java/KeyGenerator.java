@@ -6,54 +6,41 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import static java.lang.System.*;
+
 /**
  * Created by vladyslavshyshkin on 05.11.16.
  */
 public class KeyGenerator {
     private static final Gson gson = new GsonBuilder().create();
+    private KeyGenerator(){
 
-    public static void main(String[] args) {
-        if(args == null || args.length == 0 || args[0].isEmpty() ||  args[1].isEmpty() ||  args[2].isEmpty()){
-            System.out.println("INCORRECT INPUT VALUE");
+    }
+    public static void main(String[] args) throws SQLException, ClassNotFoundException {
+        if(args == null || args.length == 0){
+            out.println("INCORRECT INPUT VALUE");
             return;
         }
         String mysqlName = args[0];
         String mysqlPass = args[1];
         String databaseName = args[2];
-        try {
-            Class.forName("com.mysql.jdbc.Driver");
-        } catch (ClassNotFoundException e) {
-            System.out.println("Where is your MySQL JDBC Driver?");
-            e.printStackTrace();
-            return;
-        }
-        System.out.println("MySQL JDBC Driver Registered!");
-        Connection connection = null;
-        try {
-            connection = DriverManager
-                    .getConnection("jdbc:mysql://localhost:3306/"+databaseName,mysqlName, mysqlPass);
-
-        } catch (SQLException e) {
-            System.out.println("Connection Failed! Check output console");
-            e.printStackTrace();
-            return;
-        }
-        if (connection != null) {
-            String query = "INSERT into license(computerData, computerDataMd) values(?,?)";
-            try {
-                PreparedStatement statement = connection.prepareStatement(query);
-                statement.setString(1,generateComputerData());
-                statement.setString(2,generateComputerDataMd5());
-                statement.execute();
-            } catch (SQLException e) {
-                e.printStackTrace();
+        Class.forName("com.mysql.jdbc.Driver");
+        out.println("MySQL JDBC Driver Registered!");
+        try(Connection connection = DriverManager
+                .getConnection("jdbc:mysql://localhost:3306/"+databaseName,mysqlName, mysqlPass)) {
+            if (connection != null) {
+                String query = "INSERT into license(computerData, computerDataMd) values(?,?)";
+                try (PreparedStatement statement = connection.prepareStatement(query)) {
+                    statement.setString(1, generateComputerData());
+                    statement.setString(2, generateComputerDataMd5());
+                    statement.execute();
+                }
+            } else {
+                out.println("Failed to make connection!");
                 return;
             }
-        } else {
-            System.out.println("Failed to make connection!");
-            return;
         }
-        System.out.println("You can use your product");
+        out.println("You can use your product");
     }
 
     /**
